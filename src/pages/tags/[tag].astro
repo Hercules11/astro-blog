@@ -1,0 +1,41 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlogPost from "../../components/BlogPost.astro";
+
+// 如果需要构建页面路由的信息，请将其编写在 getStaticPaths() 内部。
+// 要在页面路由的 HTML 模板中接收信息，请将其编写在 getStaticPaths() 外部。
+// 从动态 url 路径拿到参数，然后去过滤出所需标签的博客
+export async function getStaticPaths() {
+	const allPosts = Object.values(
+		import.meta.glob("../posts/*.md", { eager: true })
+	);
+
+	const uniqueTags = [
+		...new Set(allPosts.map((post: any) => post.frontmatter.tags).flat()),
+	];
+
+	return uniqueTags.map((tag) => {
+		const filteredPosts = allPosts.filter((post: any) =>
+			post.frontmatter.tags.includes(tag)
+		);
+		return {
+			params: { tag },
+			props: { posts: filteredPosts },
+		};
+	});
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+---
+
+<BaseLayout pageTitle={tag}>
+	<p>包含「{tag}」标签的文章</p>
+	<ul>
+		{
+			posts.map((post: any) => (
+				<BlogPost url={post.url} title={post.frontmatter.title} />
+			))
+		}
+	</ul>
+</BaseLayout>
